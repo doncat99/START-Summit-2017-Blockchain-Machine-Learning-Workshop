@@ -88,11 +88,12 @@ def main():
             numTry += 1
             try:
                 contract_addr = rpc.get_contract_address(contract_tx)
-                if rpc.eth_getCode(contract_addr) == '0x0':
-                    raise Exception()
+                # if rpc.eth_getCode(contract_addr) == '0x0':
+                #     raise Exception()
                 print('contract mined (block: {})'.format(curBlock))
                 break
-            except:
+            except Exception as e:
+                print("exception", e)
                 print('new block detected, but contract not mined')
                 if numTry == WAIT_BLOCKS:
                     print('publishing contract failed')

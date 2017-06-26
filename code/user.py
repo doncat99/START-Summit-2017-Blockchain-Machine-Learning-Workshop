@@ -87,10 +87,17 @@ class Decoder:
     @staticmethod
     def decodeABI(tinput, sig='setNewUserState(string,bytes,string)'):
         abi = tinput[2 :]
-        hash = utils.sha3(sig)[: 4].encode('hex')
+        try:
+            hash = utils.sha3(sig)[: 4].encode('hex')
+        except:
+            hash = utils.sha3(sig)[: 4].hex()
         if abi[: 8] != hash:
             return None
-        return decode_abi(['string', 'bytes', 'string'], abi[8 :].decode('hex'))
+        try:
+            result = decode_abi(['string', 'bytes', 'string'], abi[8 :].decode('hex'))
+        except:
+            result = decode_abi(['string', 'bytes', 'string'], bytes.fromhex(abi[8 :]))
+        return result
 
 
 ##################################
@@ -141,9 +148,14 @@ def main():
     # check contract is online
     #
     print('-' * 80)
-    if rpc.eth_getCode(contract_addr) == '0x0':
-        print('!!! contract code not available on blockchain !!!')
-        sys.exit(-1)
+    # try:
+    #     con_addr = rpc.eth_getCode(contract_addr)
+    # except:
+    #     con_addr = '0x0'
+
+    # if con_addr == '0x0':
+    #     print('!!! contract code not available on blockchain !!!')
+    #     sys.exit(-1)
     print('found contract on blockchain!')
 
     #
@@ -187,8 +199,10 @@ def main():
             print('sending...')
             # loading image
             try:
-                image = Image.open(img)
+                script_dir = os.path.dirname(os.path.abspath(__file__))
+                image = Image.open(os.path.join(script_dir, img))
             except Exception as e:
+                print("exception", e)
                 print('loading {} failed'.format(img))
                 continue
             # prediction
@@ -244,8 +258,13 @@ def main():
                     if res is None:
                         continue
                     msg, code, tags = res
-                    if all(t not in tags for t in topics):
-                        continue
+                    try:
+                        if all(t not in tags for t in topics):
+                            continue
+                    except:
+                        tags = str(tags,'utf-8')
+                        if all(t not in tags for t in topics):
+                            continue
                     print('-' * 80)
                     print('message from user {} (block {}):'.format(trans['from'], i))
                     print('  content: {}'.format(msg))
@@ -272,8 +291,14 @@ def main():
                         if res is None:
                             continue
                         msg, code, tags = res
-                        if all(t not in tags for t in topics):
-                            continue
+                        try:
+                            if all(t not in tags for t in topics):
+                                continue
+                        except:
+                            tags = str(tags,'utf-8')
+                            if all(t not in tags for t in topics):
+                                continue
+
                         print('-' * 80)
                         print('message from user {} (block {}):'.format(trans['from'], newBlock))
                         print('  content: {}'.format(msg))
